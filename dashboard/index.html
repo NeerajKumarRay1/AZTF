@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Driven NGFW Dashboard</title>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="pulse-dot"></span>
+                <h1>AI-NGFW</h1>
+                <span class="badge">SECURE</span>
+            </div>
+            <div class="system-time" id="live-clock">00:00:00</div>
+            <div class="user-profile">
+                <span id="user-role-badge">Guest Mode</span>
+            </div>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <main class="dashboard-grid">
+            <!-- Left Side: Login & Firewall Controls -->
+            <section class="grid-col left-panel">
+                <!-- Zero Trust Login Card -->
+                <div class="card glass" id="login-card">
+                    <h2>Zero Trust Authentication</h2>
+                    <form id="login-form">
+                        <div class="input-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" placeholder="e.g., admin" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Verify Identity</button>
+                    </form>
+                    <div id="login-status" class="status-msg"></div>
+                </div>
+
+                <!-- Firewall Controls (visible after login) -->
+                <div class="card glass disabled" id="firewall-controls-card">
+                    <h2>Firewall Manual Override</h2>
+                    <form id="block-form">
+                        <div class="input-group">
+                            <label for="block-ip">IP Address</label>
+                            <input type="text" id="block-ip" placeholder="e.g., 198.51.100.42" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="block-duration">Duration (seconds)</label>
+                            <input type="number" id="block-duration" value="300" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="block-reason">Reason</label>
+                            <input type="text" id="block-reason" placeholder="Suspicious activity" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Inject Block Rule</button>
+                    </form>
+                    <div id="block-status" class="status-msg"></div>
+                </div>
+            </section>
+
+            <!-- Center Side: Charts & Live metrics -->
+            <section class="grid-col center-panel">
+                <!-- Statistics Row -->
+                <div class="stats-row">
+                    <div class="stat-card glass">
+                        <h3>Total Flows Tracked</h3>
+                        <p id="stat-total-flows">0</p>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3>Blocked IPs (Active)</h3>
+                        <p id="stat-active-blocks" class="danger-text">0</p>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3>Traffic Vol (Bytes)</h3>
+                        <p id="stat-traffic-vol">0 B</p>
+                    </div>
+                </div>
+
+                <!-- Live Traffic Chart -->
+                <div class="card glass chart-card">
+                    <h2>Real-Time Network Ingestion</h2>
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Geo-IP Threat Origin Map -->
+                <div class="card glass map-card">
+                    <h2>Geo-IP Threat Origin Map</h2>
+                    <div class="map-container">
+                        <div id="map"></div>
+                        <!-- Floating Map Leaderboard Overlay -->
+                        <div class="map-overlay glass">
+                            <h4>Top Threat Sources</h4>
+                            <div id="map-leaderboard-list">
+                                <div class="leaderboard-item empty">Awaiting data...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Health & Protocols -->
+                <div class="row split-row">
+                    <div class="card glass half-card">
+                        <h2>System Health (WSL2)</h2>
+                        <div class="health-metrics">
+                            <div class="health-bar-group">
+                                <span>CPU</span>
+                                <div class="progress-bar"><div class="progress-fill" id="cpu-fill" style="width: 0%;"></div></div>
+                                <span class="val" id="cpu-val">0%</span>
+                            </div>
+                            <div class="health-bar-group">
+                                <span>Memory</span>
+                                <div class="progress-bar"><div class="progress-fill" id="mem-fill" style="width: 0%;"></div></div>
+                                <span class="val" id="mem-val">0%</span>
+                            </div>
+                            <div class="health-bar-group">
+                                <span>Disk</span>
+                                <div class="progress-bar"><div class="progress-fill" id="disk-fill" style="width: 0%;"></div></div>
+                                <span class="val" id="disk-val">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card glass half-card">
+                        <h2>Protocol Share</h2>
+                        <div class="chart-container-small">
+                            <canvas id="protocolChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Threat Feed & Active Rules -->
+            <section class="grid-col right-panel">
+                <!-- Live Threat Feed -->
+                <div class="card glass feed-card">
+                    <h2>Live Threat Verdict Feed</h2>
+                    <div class="feed-container" id="threat-feed">
+                        <div class="feed-placeholder">Waiting for ML classifications...</div>
+                    </div>
+                </div>
+
+                <!-- Active Rules List -->
+                <div class="card glass rules-card">
+                    <h2>Active Firewall Rules</h2>
+                    <div class="table-container">
+                        <table class="rules-table">
+                            <thead>
+                                <tr>
+                                    <th>IP</th>
+                                    <th>Reason</th>
+                                    <th>Expires</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rules-list">
+                                <tr>
+                                    <td colspan="4" class="empty-row">No active blocks.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

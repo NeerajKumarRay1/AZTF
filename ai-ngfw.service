@@ -1,0 +1,15 @@
+[Unit]
+Description=AI-Driven Next-Generation Firewall Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/mnt/c/Users/vinay/Downloads/AZTF
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/vinayak/miniconda3/envs/ai-ngfw/bin/python /mnt/c/Users/vinay/Downloads/AZTF/monitor.py --live --enforce
+Restart=always
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target

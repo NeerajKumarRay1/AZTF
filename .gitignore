@@ -1,0 +1,41 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environments
+venv/
+.env
+.venv
+env/
+ENV/
+*.env
+conda-env/
+
+# Datasets & raw captures
+data/
+datasets/
+pcaps/
+*.csv
+*.txt
+*.zip
+*.pcap
+*.pcapng
+
+# Serialized models and scalers (to avoid large binaries in Git)
+models/*.joblib
+models/*.h5
+models/*.pkl
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# IDE / system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.gemini/
+doc_text.txt
