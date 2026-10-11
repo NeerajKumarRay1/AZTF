@@ -232,4 +232,9 @@ async def startup_event():
 # Mount dashboard static directory
 dashboard_path = os.path.join(BASE_DIR, "dashboard")
 os.makedirs(dashboard_path, exist_ok=True)
-app.mount("/dashboard", StaticFiles(directory=dashboard_path), name="dashboard")
+app.mount("/dashboard", StaticFiles(directory=dashboard_path, html=True), name="dashboard")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

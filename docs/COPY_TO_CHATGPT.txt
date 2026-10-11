@@ -1,0 +1,41 @@
+I have an AI-Driven Network Firewall project (Python) that uses machine learning to detect network threats. It's currently working with simulated traffic, but I want to capture REAL network packets using Scapy in WSL2 (Ubuntu 22.04 on Windows 11).
+
+**My Current Issue:**
+
+I'm trying to give Python raw packet capture permissions with this command:
+
+```bash
+sudo setcap cap_net_raw,cap_net_admin+eip $(which python3)
+```
+
+But I get this error:
+```
+Invalid file '/usr/bin/python3' for capability operation
+```
+
+**My Understanding:**
+- `/usr/bin/python3` is a symlink, not the actual binary
+- `setcap` doesn't work on symlinks in WSL2
+- I need to either find the real binary or use an alternative method
+
+**My Project Setup:**
+- Python 3.10 in WSL2
+- Using Scapy for packet capture
+- Need to run `python3 monitor.py --live` to capture real network traffic
+- Project location: `/mnt/c/Users/neera/OneDrive/Desktop/projects/AZTF2`
+
+**What I've Tried:**
+- The setcap command above (failed with symlink error)
+- Running with `sudo python3 monitor.py --live` (this works but I want to avoid typing sudo each time)
+
+**What I Need:**
+
+A reliable way to run `python3 monitor.py --live` in WSL2 with packet capture permissions, preferably without needing sudo every time.
+
+**Additional Context:**
+- This is for a research project demonstrating ML-based intrusion detection
+- I have 4 trained models (Random Forest, XGBoost, Isolation Forest, LSTM) 
+- The system analyzes network flows and detects attacks with 97.8% accuracy
+- Dashboard is already working - just need to feed it real network data instead of simulations
+
+Please provide step-by-step instructions that will work in WSL2 Ubuntu 22.04.

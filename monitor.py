@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 import time
 import argparse
@@ -102,51 +103,77 @@ class Flow:
         }
 
 def process_packet(pkt):
-    if not IP in pkt:
-        return
-        
-    src_ip = pkt[IP].src
-    dst_ip = pkt[IP].dst
-    
-    protocol = "OTHER"
-    src_port = 0
-    dst_port = 0
-    
-    if TCP in pkt:
-        protocol = "TCP"
-        src_port = pkt[TCP].sport
-        dst_port = pkt[TCP].dport
-    elif UDP in pkt:
-        protocol = "UDP"
-        src_port = pkt[UDP].sport
-        dst_port = pkt[UDP].dport
-    elif ICMP in pkt:
-        protocol = "ICMP"
-        
-    # Build bidirectional flow key (make src_ip the smaller IP to group both directions)
-    if src_ip < dst_ip:
-        flow_key = (src_ip, dst_ip, src_port, dst_port, protocol)
-        direction = "fwd"
-    else:
-        flow_key = (dst_ip, src_ip, dst_port, src_port, protocol)
-        direction = "bwd"
-        
-    if flow_key not in active_flows:
-        active_flows[flow_key] = Flow(src_ip, dst_ip, src_port, dst_port, protocol)
-        
-    flow = active_flows[flow_key]
-    flow.add_packet(pkt, direction)
-    
-    # Check if flow is completed (e.g. TCP FIN/RST or timeout)
-    is_complete = False
-    if TCP in pkt:
-        flags = pkt[TCP].flags
-        if 'F' in flags or 'R' in flags:
-            is_complete = True
-            
-    if is_complete or (time.time() - flow.last_time > FLOW_TIMEOUT):
-        evaluate_flow(flow)
-        del active_flows[flow_key]
+    try:
+        if IP not in pkt:
+            return
+
+        src_ip = pkt[IP].src
+        dst_ip = pkt[IP].dst
+
+        protocol = "OTHER"
+        src_port = 0
+        dst_port = 0
+
+        if TCP in pkt:
+            protocol = "TCP"
+            src_port = pkt[TCP].sport
+            dst_port = pkt[TCP].dport
+        elif UDP in pkt:
+            protocol = "UDP"
+            src_port = pkt[UDP].sport
+            dst_port = pkt[UDP].dport
+        elif ICMP in pkt:
+            protocol = "ICMP"
+
+        endpoint_a = (src_ip, src_port)
+        endpoint_b = (dst_ip, dst_port)
+
+        if endpoint_a <= endpoint_b:
+            flow_key = (
+                src_ip, dst_ip, src_port, dst_port, protocol
+            )
+            direction = "fwd"
+        else:
+            flow_key = (
+                dst_ip, src_ip, dst_port, src_port, protocol
+            )
+            direction = "bwd"
+
+        now = time.time()
+
+        expired_keys = [
+            key for key, existing_flow in active_flows.items()
+            if now - existing_flow.last_time >= FLOW_TIMEOUT
+        ]
+
+        for key in expired_keys:
+            expired_flow = active_flows.pop(key)
+            print(
+                f"[Flow expired] {expired_flow.src_ip} -> "
+                f"{expired_flow.dst_ip}, packets="
+                f"{expired_flow.src_pkts + expired_flow.dst_pkts}"
+            )
+            evaluate_flow(expired_flow)
+
+        if flow_key not in active_flows:
+            active_flows[flow_key] = Flow(
+                src_ip, dst_ip, src_port, dst_port, protocol
+            )
+
+        flow = active_flows[flow_key]
+        flow.add_packet(pkt, direction)
+
+        if TCP in pkt:
+            flags = pkt[TCP].flags
+            if 'F' in flags or 'R' in flags:
+                active_flows.pop(flow_key, None)
+                print(f"[Flow closed] {src_ip} -> {dst_ip}")
+                evaluate_flow(flow)
+
+    except Exception:
+        import traceback
+        print("[Packet processing error]")
+        traceback.print_exc()
 
 def evaluate_flow(flow):
     global rf_model, xgb_model, iso_model, lstm_model, scaler
@@ -155,22 +182,31 @@ def evaluate_flow(flow):
         # Dry-run logging to database without ML inference
         flow_id = str(uuid.uuid4())
         features = flow.get_features()
-        database.log_flow(flow_id, flow.src_ip, flow.dst_ip, flow.src_port, flow.dst_port, flow.protocol, features)
-        return
-        
+        database.log_flow(
+            flow_id, flow.src_ip, flow.dst_ip,
+            flow.src_port, flow.dst_port, flow.protocol, features
+        )
+        return        
     features = flow.get_features()
     flow_id = str(uuid.uuid4())
     
     # 1. Log flow metadata to database
     database.log_flow(flow_id, flow.src_ip, flow.dst_ip, flow.src_port, flow.dst_port, flow.protocol, features)
     
-    # 2. Extract feature array
-    feature_names = ['duration', 'protocol', 'src_bytes', 'dst_bytes', 'src_pkts', 'dst_pkts', 'rate']
-    feat_vector = np.array([[features[name] for name in feature_names]])
-    
+
+    # 2. Extract features with the expected column names
+    feature_names = [
+        'duration', 'protocol', 'src_bytes', 'dst_bytes',
+        'src_pkts', 'dst_pkts', 'rate'
+    ]
+
+    feat_vector = pd.DataFrame(
+        [[features[name] for name in feature_names]],
+        columns=feature_names
+    )
+
     # Preprocess
-    feat_scaled = scaler.transform(feat_vector)
-    
+    feat_scaled = scaler.transform(feat_vector)    
     # 3. Model Predictions
     votes = {}
     

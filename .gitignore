@@ -1,41 +1,134 @@
-# Python caches
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Environments
+# Virtual Environment
+.venv/
 venv/
-.env
-.venv
-env/
 ENV/
-*.env
-conda-env/
+env/
+.virtualenv/
 
-# Datasets & raw captures
-data/
-datasets/
-pcaps/
-*.csv
-*.txt
-*.zip
-*.pcap
-*.pcapng
-
-# Serialized models and scalers (to avoid large binaries in Git)
-models/*.joblib
-models/*.h5
-models/*.pkl
-
-# Jupyter Notebooks
-.ipynb_checkpoints/
-
-# IDE / system files
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
+
+# Logs
+logs/*.log
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+data/ngfw.db
+
+# Models (optional - uncomment if you don't want to track trained models)
+# models/*.joblib
+# models/*.h5
+# models/*.pkl
+
+# Processed Data
+data/processed/*.npy
+data/processed/*.csv
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Mac
+.DS_Store
+
+# Windows
 Thumbs.db
-.gemini/
-doc_text.txt
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Backup files
+*.bak
+*.bak2
+*.backup
+*~
+
+# Downloaded datasets (large files)
+data/cicids2017/*.csv
+data/unsw_nb15/*.csv
+data/nsl_kdd/*.txt
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Package files
+*.tar.gz
+*.zip
